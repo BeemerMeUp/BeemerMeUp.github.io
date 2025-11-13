@@ -1,0 +1,68 @@
+let Lookback = ago(1h);
+let OperationNames = dynamic(["New-TransportRule", "Set-TransportRule", "New-InboxRule", "Set-InboxRule", "Set-Mailbox", "UpdateInboxRules", "Set-TransportConfig"]);
+let RuleTypes = dynamic(["Forward", "ForwardTo", "RedirectTo", "ForwardingSmtpAddress", "ForwardAsAttachmentTo", "RedirectMessageTo", "BlindCopyTo", "SentTo"]);
+let ownDomains = (_GetWatchlist('WS-Verified-domains')) | project SearchKey;
+let AllOfficeActivity = OfficeActivity
+| where TimeGenerated > Lookback
+| where OfficeWorkload == "Exchange"
+| where Operation in~ (OperationNames)
+| extend Parsed = iff(isempty(Parameters), parse_json(OperationProperties), todynamic(Parameters))
+| where Parsed has_any (RuleTypes);
+let SetInboxRules1 = AllOfficeActivity
+| where Operation != "UpdateInboxRules"
+| extend InitiatedBy = UserId
+| mv-apply ForwardDetails = Parsed on (
+    where ForwardDetails.Name in~(RuleTypes) and not(ForwardDetails.Name =~ "ForwardingSmtpAddress")
+    | extend RuleType = tostring(ForwardDetails.Name)
+    | extend ForwardDestination = tostring(ForwardDetails.Value)
+)
+| mv-apply RuleDetails = Parsed on (
+    where RuleDetails.Name =~ "Name" and isnotempty(RuleDetails.Value)
+    | extend RuleName = tostring(RuleDetails.Value)
+)
+| where isnotempty(ForwardDestination) or isnotempty(RuleName)
+| extend ClientIPAddress = iff(isnotempty(ClientIP), ClientIP, Client_IPAddress)
+| parse kind=regex ClientIPAddress with "[[]" IPAddress1 "]:" Port1
+| parse kind=regex ClientIPAddress with IPAddress2 ":" Port2
+| extend IPAddress = iif(isnotempty(IPAddress1), IPAddress1, IPAddress2)
+| extend Port = iif(isnotempty(Port1), Port1, Port2)
+| project TimeGenerated, Operation, IPAddress, Port, InitiatedBy, ForwardDestination, RuleName, RuleType, Parsed;
+let SetInboxRules2 = AllOfficeActivity
+| where Operation != "UpdateInboxRules"
+| extend InitiatedBy = UserId
+| mv-apply ForwardDetails = Parsed on (
+    where ForwardDetails.Name =~ "ForwardingSmtpAddress"
+    | extend RuleType = tostring(ForwardDetails.Name)
+    | extend ForwardDestination = tostring(ForwardDetails.Value)
+)
+| extend RuleName = " "
+| where isnotempty(ForwardDestination) or isnotempty(RuleName)
+| extend ClientIPAddress = iff(isnotempty(ClientIP), ClientIP, Client_IPAddress)
+| parse kind=regex ClientIPAddress with "[[]" IPAddress1 "]:" Port1
+| parse kind=regex ClientIPAddress with IPAddress2 ":" Port2
+| extend IPAddress = iif(isnotempty(IPAddress1), IPAddress1, IPAddress2)
+| extend Port = iif(isnotempty(Port1), Port1, Port2)
+| project TimeGenerated, Operation, IPAddress, Port, InitiatedBy, ForwardDestination, RuleName, RuleType, Parsed;
+let UpdateInboxRules = AllOfficeActivity
+| where Operation =~ "UpdateInboxRules"
+| extend InitiatedBy = UserId, IPAddress = Client_IPAddress
+| mv-apply ForwardDetails = Parsed on (
+    where ForwardDetails.Name =~ "RuleActions" and isnotempty(ForwardDetails.Value)
+    | extend ForwardDestination = tostring(parse_json(tostring(parse_json(tostring(ForwardDetails.Value))[0].Recipients))[0])
+    | extend RuleType = tostring(parse_json(tostring(ForwardDetails.Value))[0].ActionType)
+)
+| mv-apply RuleDetails = Parsed on (
+    where RuleDetails.Name in ("RuleName", "RuleId") and isnotempty(RuleDetails.Value)
+    | extend RuleName = tostring(RuleDetails.Value)
+)
+| project TimeGenerated, Operation, IPAddress, Port="", InitiatedBy, ForwardDestination, RuleName, RuleType, Parsed;
+union isfuzzy=true SetInboxRules1, SetInboxRules2, UpdateInboxRules
+| where isnotempty(ForwardDestination)
+| extend EmailList = iff(ForwardDestination contains ";",split(ForwardDestination, ";"),split(ForwardDestination, ", "))
+| mv-expand Email = EmailList
+| extend Email = trim(' ', replace(@"(?i)^smtp:", "", tostring(Email)))
+| where Email has "@"
+| extend ForwardDomain = tolower(extract(@"@([^@]+)$", 1, Email))
+| join kind=leftanti ownDomains on $left.ForwardDomain == $right.SearchKey
+| extend Name = tostring(split(InitiatedBy, "@", 0)[0]), UPNSuffix = tostring(split(InitiatedBy, "@", 1)[0])
+| project TimeGenerated, Operation, IPAddress, Port, InitiatedBy, ForwardDestination=Email, ForwardDomain, RuleName, RuleType, Name, UPNSuffix, Parsed

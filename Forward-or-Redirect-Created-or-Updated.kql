@@ -1,7 +1,7 @@
 let Lookback = ago(1h);
 let OperationNames = dynamic(["New-TransportRule", "Set-TransportRule", "New-InboxRule", "Set-InboxRule", "Set-Mailbox", "UpdateInboxRules", "Set-TransportConfig"]);
 let RuleTypes = dynamic(["Forward", "ForwardTo", "RedirectTo", "ForwardingSmtpAddress", "ForwardAsAttachmentTo", "RedirectMessageTo", "BlindCopyTo", "SentTo"]);
-let ownDomains = (_GetWatchlist('WS-Verified-domains')) | project SearchKey;
+let ownDomains = (_GetWatchlist('Verified-domains')) | project SearchKey;
 let AllOfficeActivity = OfficeActivity
 | where TimeGenerated > Lookback
 | where OfficeWorkload == "Exchange"

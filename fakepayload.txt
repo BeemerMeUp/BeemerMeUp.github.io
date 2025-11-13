@@ -1,5 +1,0 @@
-This is a demo file and has no other purpose 
-[2025-10-02 12:00:00] INFO  REQUEST   id=req-0001 client=cli_demo user=user_demo action=checkout
-[2025-10-02 12:00:00] DEBUG ITEM     sku=SKU-001 qty=1 price=9.99
-[2025-10-02 12:00:00] INFO  TOTAL    subtotal=9.99 tax=0.00 shipping=0.00 grand_total=9.99
-[2025-10-02 12:00:01] INFO  RESPONSE  status=200 message="ok - dummy response"

@@ -62,11 +62,38 @@ The following KQL analytic rule solves this challenge with a unified approach:
 
 * Normalizes different logging structures
 * Extracts forwarding destinations regardless of their source format
+
+    ```kql
+    // in Parameters
+    | mv-apply ForwardDetails = Parsed on (
+        where ForwardDetails.Name =~ "ForwardingSmtpAddress"
+        | extend RuleType = tostring(ForwardDetails.Name)
+        | extend ForwardDestination = tostring(ForwardDetails.Value)
+    )
+    // in OperationProperties
+    | mv-apply ForwardDetails = Parsed on (
+        where ForwardDetails.Name =~ "RuleActions" and isnotempty(ForwardDetails.Value)
+        | extend ForwardDestination = tostring(parse_json(tostring(parse_json(tostring(ForwardDetails.Value))[0].Recipients))[0])
+        | extend RuleType = tostring(parse_json(tostring(ForwardDetails.Value))[0].ActionType)
+    )
+    ```
+
 * Handles legacy and modern rule-update formats
 * Expands and cleans email lists (removing smtp: prefixes)
+
+    ```kql
+    | extend Email = trim(' ', replace(@"(?i)^smtp:", "", tostring(Email)))
+    ```
+
 * Extracts rule names and rule types when available
 * Parses and normalizes IP address fields
 * Filters out organization-owned/verified domains
+
+    ```kql
+    | where Email has "@"
+    | extend ForwardDomain = tolower(extract(@"@([^@]+)$", 1, Email))
+    | join kind=leftanti ownDomains on $left.ForwardDomain == $right.SearchKey
+    ```
 
 The full Detection can be found on my [Github Page](https://github.com/BeemerMeUp/BeemerMeUp.github.io/blob/main/Forward-or-Redirect-Created-or-Updated.kql).
 

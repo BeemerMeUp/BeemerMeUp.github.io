@@ -1,10 +1,6 @@
----
-title: Detecting Email Forwarding Rules in Microsoft Sentinel
----
+# Detecting Email Forwarding Rules in Microsoft Sentinel
 
-## Detecting Email Forwarding Rules in Microsoft Sentinel
-
-### Handling Microsoft’s Logging Changes for Reliable Threat Detection
+## Handling Microsoft’s Logging Changes for Reliable Threat Detection
 
 Email forwarding rules remain one of the most abused mechanisms in account-takeover scenarios. Whether attackers are quietly exfiltrating sensitive data or maintaining persistence after stealing credentials, unauthorized mailbox forwarding can quickly become a major security incident.
 

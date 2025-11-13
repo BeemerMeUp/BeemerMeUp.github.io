@@ -1,3 +1,5 @@
+![Banner Image](BlogBanner-01.jpg 'Banner')
+
 # Detecting Email Forwarding Rules in Microsoft Sentinel
 
 ## Handling Microsoft’s Logging Changes for Reliable Threat Detection

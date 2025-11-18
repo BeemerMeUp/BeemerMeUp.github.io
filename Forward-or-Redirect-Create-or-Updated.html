@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detecting Email Forwarding Rules in Microsoft Sentinel</title>
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <div class="content">
+        <img src="BlogBanner-01.jpg" alt="Banner" class="banner" title="Banner">
+        
+        <h1>Detecting Email Forwarding Rules in Microsoft Sentinel</h1>
+        
+        <h2>Handling Microsoft's Logging Changes for Reliable Threat Detection</h2>
+        
+        <p>Email forwarding rules remain one of the most abused mechanisms in account-takeover scenarios. Whether attackers are quietly exfiltrating sensitive data or maintaining persistence after stealing credentials, unauthorized mailbox forwarding can quickly become a major security incident.</p>
+        
+        <p>But in the last year, Microsoft made changes to how various forwarding-related actions are logged in <strong>OfficeActivity</strong> table. These changes introduced inconsistencies in the events generated for forwarding, redirecting, and mailbox-level forwarding configurations. As a result, security teams relying on older detection logic may now miss critical events or receive incomplete data.</p>
+        
+        <p>This blog breaks down what changed, why it matters, and presents an advanced Microsoft Sentinel KQL detection that normalizes all forwarding-related logs into a single, uniform output—regardless of the operation type or the logging source.</p>
+        
+        <hr>
+        
+        <h3>Why Forwarding-Rule Detection Became More Complicated</h3>
+        
+        <p>Forwarding rules can be created or modified in several places:</p>
+        
+        <ul>
+            <li><strong>Inbox rules</strong> (Outlook / OWA)</li>
+            <li><strong>Transport rules</strong> (Exchange admin center / PowerShell)</li>
+            <li><strong>Mailbox settings</strong> (forwarding address, forwarding SMTP address)</li>
+            <li><strong>Modern clients that trigger UpdateInboxRules operations</strong></li>
+        </ul>
+        
+        <p>Historically, Microsoft logged many of these actions under predictable Operation values such as:</p>
+        
+        <ul>
+            <li>New-InboxRule</li>
+            <li>Set-InboxRule</li>
+            <li>New-TransportRule</li>
+            <li>Set-TransportRule</li>
+            <li>Set-Mailbox</li>
+        </ul>
+        
+        <p>However, Microsoft has:</p>
+        
+        <h4>1. Introduced new operation names</h4>
+        
+        <p>For example, UpdateInboxRules now appears for various modern Outlook actions and bundles multiple rule changes into a single event.</p>
+        
+        <h4>2. Changed how forwarding actions appear in the audit log</h4>
+        
+        <p>Certain forwarding configurations no longer surface under Parameters but instead under OperationProperties.</p>
+        
+        <h4>3. Modified how destinations and rule definition objects are serialized</h4>
+        
+        <p>Some events now return:</p>
+        
+        <ul>
+            <li>Arrays or nested JSON objects</li>
+            <li>Complex structures like RuleActions</li>
+            <li>Forwarding addresses prefixed with smtp:</li>
+            <li>Multiple recipients combined into one string</li>
+        </ul>
+        
+        <h4>4. Created inconsistencies across legacy vs. modern clients</h4>
+        
+        <p>Outlook desktop vs. Outlook on the web vs. PowerShell can produce significantly different schema structures for functionally identical actions.</p>
+        
+        <p>These inconsistencies make detection difficult—unless all cases are accounted for and normalized.</p>
+        
+        <hr>
+        
+        <h3>A Sentinel Detection That Normalizes All Forwarding Logs</h3>
+        
+        <p>The following KQL analytic rule solves this challenge with a unified approach:</p>
+        
+        <ul>
+            <li>Normalizes different logging structures</li>
+            <li>Extracts forwarding destinations regardless of their source format</li>
+        </ul>
+        
+        <pre><code>// in Parameters
+| mv-apply ForwardDetails = Parsed on (
+    where ForwardDetails.Name =~ "ForwardingSmtpAddress"
+    | extend RuleType = tostring(ForwardDetails.Name)
+    | extend ForwardDestination = tostring(ForwardDetails.Value)
+)
+// in OperationProperties
+| mv-apply ForwardDetails = Parsed on (
+    where ForwardDetails.Name =~ "RuleActions" and isnotempty(ForwardDetails.Value)
+    | extend ForwardDestination = tostring(parse_json(tostring(parse_json(tostring(ForwardDetails.Value))[0].Recipients))[0])
+    | extend RuleType = tostring(parse_json(tostring(ForwardDetails.Value))[0].ActionType)
+)</code></pre>
+        
+        <ul>
+            <li>Handles legacy and modern rule-update formats</li>
+            <li>Expands and cleans email lists (removing smtp: prefixes)</li>
+        </ul>
+        
+        <pre><code>| extend Email = trim(' ', replace(@"(?i)^smtp:", "", tostring(Email)))</code></pre>
+        
+        <ul>
+            <li>Extracts rule names and rule types when available</li>
+            <li>Parses and normalizes IP address fields</li>
+            <li>Filters out organization-owned/verified domains</li>
+        </ul>
+        
+        <pre><code>| where Email has "@"
+| extend ForwardDomain = tolower(extract(@"@([^@]+)$", 1, Email))
+| join kind=leftanti ownDomains on $left.ForwardDomain == $right.SearchKey</code></pre>
+        
+        <p>The full Detection can be found on my <a href="https://github.com/BeemerMeUp/BeemerMeUp.github.io/blob/main/Forward-or-Redirect-Created-or-Updated.kql">Github Page</a>.</p>
+        
+        <hr>
+        
+        <h3>How the Detection Works</h3>
+        
+        <h4>1. Collect all forwarding-related audit operations</h4>
+        
+        <p>The rule begins by defining:</p>
+        
+        <ul>
+            <li>A one-hour lookback window</li>
+            <li>A list of all relevant forwarding-related Operation names</li>
+            <li>A list of forwarding-related property names</li>
+            <li>Your verified internal domains (using a watchlist)</li>
+        </ul>
+        
+        <p>Then it collects all Exchange-related OfficeActivity logs matching those operations and extracts their parameter structures, regardless of whether they appear under Parameters or OperationProperties.</p>
+        
+        <h4>2. Normalize inbox rule and transport rule logs</h4>
+        
+        <p>The detection separates:</p>
+        
+        <ul>
+            <li>Traditional New-InboxRule / Set-InboxRule</li>
+            <li>Transport rule modifications</li>
+            <li>Events using the modern UpdateInboxRules</li>
+        </ul>
+        
+        <p>Each gets its own parsing path because Microsoft logs them differently.</p>
+        
+        <h4>3. Extract forwarding destinations from all possible schema layouts</h4>
+        
+        <p>Depending on the operation type, forwarding info may be buried inside:</p>
+        
+        <ul>
+            <li>ForwardTo</li>
+            <li>RedirectTo</li>
+            <li>ForwardingSmtpAddress</li>
+            <li>RuleActions → nested recipients array</li>
+            <li>Combined multiple recipients (semicolon or comma separators)</li>
+        </ul>
+        
+        <p>This query handles all of them.</p>
+        
+        <h4>4. Normalize output into a single unified dataset</h4>
+        
+        <p>After each operation type is parsed in its respective block, all results are unioned and cleaned.</p>
+        
+        <p>The final output contains:</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Meaning</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>TimeGenerated</td>
+                    <td>When the rule was created/modified</td>
+                </tr>
+                <tr>
+                    <td>Operation</td>
+                    <td>The specific log type triggered</td>
+                </tr>
+                <tr>
+                    <td>IPAddress / Port</td>
+                    <td>Client network info</td>
+                </tr>
+                <tr>
+                    <td>InitiatedBy</td>
+                    <td>UPN of the user who created/changed the rule</td>
+                </tr>
+                <tr>
+                    <td>ForwardDestination</td>
+                    <td>Cleaned forwarding target</td>
+                </tr>
+                <tr>
+                    <td>ForwardDomain</td>
+                    <td>Domain extracted from destination</td>
+                </tr>
+                <tr>
+                    <td>RuleName</td>
+                    <td>The rule's name (if available)</td>
+                </tr>
+                <tr>
+                    <td>RuleType</td>
+                    <td>Type of forwarding action</td>
+                </tr>
+                <tr>
+                    <td>Name / UPNSuffix</td>
+                    <td>Parsed username + domain</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p>Finally, it filters out any forwarding rules targeting your own domains, leaving only external or untrusted forwarding destinations.</p>
+        
+        <hr>
+        
+        <h3>Why This Matters for Threat Detection</h3>
+        
+        <p>Attackers rely on forwarding rules because they provide:</p>
+        
+        <ul>
+            <li><strong>Persistence</strong> – email copies keep flowing out even if MFA is enabled</li>
+            <li><strong>Stealth</strong> – users often don't notice forward rules</li>
+            <li><strong>Data exfiltration</strong> – sensitive email sent outside the environment</li>
+        </ul>
+        
+        <p>Given Microsoft's logging changes, organizations using outdated Sentinel queries may:</p>
+        
+        <ul>
+            <li>Miss modern Outlook rule updates</li>
+            <li>Fail to parse forwarding SMTP addresses</li>
+            <li>Misinterpret nested RuleActions</li>
+            <li>Miss multi-recipient forwarding</li>
+            <li>Lose visibility into external data flows</li>
+        </ul>
+        
+        <p>This detection restores that visibility.</p>
+        
+        <hr>
+        
+        <h3>Conclusion</h3>
+        
+        <p>Microsoft's shifting log schemas for forwarding rules have made detection more complex—but not impossible. By accounting for all known variations and normalizing them into a single output table, this Sentinel detection provides reliable visibility into potentially dangerous email forwarding activity across the entire tenant.</p>
+        
+        <p>If you rely on forwarding-rule monitoring for security (and you should), updating your detection logic is essential.</p>
+    </div>
+</body>
+</html>

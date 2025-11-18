@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>My Blog • username</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="My personal blog on GitHub Pages" />
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <div class="brand">
+        <a href="/" class="logo">username</a>
+        <p class="tagline">Thoughts, notes & experiments</p>
+      </div>
+      <nav class="nav">
+        <a href="/" class="nav-link active">Blog</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="https://github.com/username" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <section class="hero">
+      <div class="container hero-inner">
+        <div>
+          <h1>Welcome to my blog 👋</h1>
+          <p>
+            I write about software, side projects, and whatever I&apos;m currently
+            learning. Here are my latest posts:
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="posts container">
+      <!-- Post 1 -->
+      <article class="post-card">
+        <a href="/posts/first-post.html" class="post-title">My First Fancy HTML Post</a>
+        <p class="post-meta">Published on <time datetime="2025-01-01">January 1, 2025</time></p>
+        <p class="post-excerpt">
+          A quick walkthrough of how I moved my GitHub Pages homepage from Markdown to a custom HTML and CSS layout.
+        </p>
+        <a class="post-readmore" href="/posts/first-post.html">Read more →</a>
+      </article>
+
+      <!-- Post 2 -->
+      <article class="post-card">
+        <a href="/posts/another-post.html" class="post-title">Another Post Title</a>
+        <p class="post-meta">Published on <time datetime="2025-02-15">February 15, 2025</time></p>
+        <p class="post-excerpt">
+          A short description of what this post is about, to give readers a quick preview.
+        </p>
+        <a class="post-readmore" href="/posts/another-post.html">Read more →</a>
+      </article>
+
+      <!-- Add more posts here -->
+    </section>
+
+    <section id="about" class="about">
+      <div class="container">
+        <h2>About me</h2>
+        <p>
+          I&apos;m a developer who enjoys building things and writing about the process.
+          This blog lives on GitHub Pages and is built with plain HTML and CSS.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p>© <span id="year"></span> username. Built with ❤️ on GitHub Pages.</p>
+    </div>
+    <script>
+      // Just for the year in the footer (no framework needed)
+      document.getElementById("year").textContent = new Date().getFullYear();
+    </script>
+  </footer>
+</body>
+</html>

@@ -259,4 +259,15 @@ body {
   .post-card {
     padding: 1.05rem 1.1rem;
   }
+
+  p a {
+    color: white;
+    font-weight: bold;
+  }
+
+  p a:hover {
+      color: #f0f0f0;
+      font-weight: bold;
+      text-decoration: underline;
+  }
 }

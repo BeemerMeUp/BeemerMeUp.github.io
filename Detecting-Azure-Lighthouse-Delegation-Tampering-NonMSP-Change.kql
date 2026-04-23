@@ -1,0 +1,23 @@
+let SentinelRG = toscalar(
+    Usage
+    | where TimeGenerated > ago(1d)
+    | where Solution == "LogManagement" and DataType == "SigninLogs"
+    | extend ResourceGroup = tolower(split(split(ResourceUri, "/resourcegroups/")[1], "/")[0])
+    | where isnotempty(ResourceGroup)
+    | summarize any(ResourceGroup)
+);
+AzureActivity
+| where TimeGenerated > ago(1h)
+| where CategoryValue == "Administrative"
+| where ResourceProviderValue =~ "MICROSOFT.MANAGEDSERVICES"
+| where isnotempty(ResourceGroup) and
+    isnotempty(SentinelRG) and
+    tolower(ResourceGroup) != SentinelRG
+| extend
+    CallerType = tostring(parse_json(Authorization).evidence.principalType),
+    Registration = tostring(parse_json(Properties).resource),
+    UserName = iff(Caller contains "@", tostring(split(Caller, "@", 0)[0]), Caller),
+    UPNSuffix = iff(Caller contains "@", tostring(split(Caller, "@", 1)[0]), "")
+| project TimeGenerated, OperationNameValue, Status=ActivityStatusValue, Caller, UserName,
+    UPNSuffix, CallerIpAddress, CallerType, Registration, ResourceGroup
+| sort by TimeGenerated desc

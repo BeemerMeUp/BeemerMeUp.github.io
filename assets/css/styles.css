@@ -240,6 +240,16 @@ body {
   color: var(--muted);
 }
 
+/* Content */
+
+.content img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: var(--radius-lg);
+  margin-bottom: 2rem;
+}
+
 /* Responsive */
 
 @media (max-width: 640px) {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Detecting Azure Lighthouse Delegation Tampering with Microsoft Sentinel</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Two complementary Microsoft Sentinel KQL analytic rules to detect Azure Lighthouse delegation tampering — covering both expected MSP changes and unknown third-party delegation activity.">
+    <meta name="description" content="Two complementary Microsoft Sentinel KQL analytic rules to detect Azure Lighthouse delegation tampering, covering both expected MSP changes and unknown third-party delegation activity.">
     <link rel="stylesheet" href="assets/css/styles.css">
 </head>
 <body>
@@ -42,7 +42,7 @@
             </p>
 
             <div class="callout">
-                <strong>Goal:</strong> Detect when Azure Lighthouse delegations are created, modified, or deleted in your monitored environment — distinguishing between expected MSP activity and unknown third-party delegation changes, before they become a blind spot.
+                <strong>Goal:</strong> Detect when Azure Lighthouse delegations are created, modified, or deleted in your monitored environment, distinguishing between expected MSP activity and unknown third-party delegation changes, before they become a blind spot.
             </div>
 
             <hr>
@@ -53,7 +53,7 @@
                 Imagine this: your team manages security operations for a customer via Azure Lighthouse. Your delegated access covers their Sentinel workspace, their Log Analytics tables, their incident queue. Everything runs through that Lighthouse registration.
             </p>
             <p>
-                Now imagine someone — a rogue admin, a misconfigured automation, a threat actor who's already inside, or even a well-meaning but uninformed customer — modifies or removes that delegation. Your monitoring keeps running, your dashboards stay green, but your service is quietly degraded. You're no longer seeing what you think you're seeing. Alerts aren't firing. Incident response is impaired. And you may not know until something goes badly wrong.
+                Now imagine someone, a rogue admin, a misconfigured automation, a threat actor who's already inside, or even a well-meaning but uninformed customer, modifies or removes that delegation. Your monitoring keeps running, your dashboards stay green, but your service is quietly degraded. You're no longer seeing what you think you're seeing. Alerts aren't firing. Incident response is impaired. And you may not know until something goes badly wrong.
             </p>
             <p>The three actors most likely to trigger this (intentionally or not):</p>
             <ul>
@@ -89,7 +89,7 @@
 );</code></pre>
 
             <p>
-                This query looks at recent <code>Usage</code> table entries for your Log Analytics workspace and extracts the resource group name from the <code>ResourceUri</code>. The result (<code>SentinelRG</code>) is then used as a filter in the main query — either to match changes <em>within</em> your scope, or to catch changes <em>outside</em> it.
+                This query looks at recent <code>Usage</code> table entries for your Log Analytics workspace and extracts the resource group name from the <code>ResourceUri</code>. The result (<code>SentinelRG</code>) is then used as a filter in the main query, either to match changes <em>within</em> your scope, or to catch changes <em>outside</em> it.
             </p>
 
             <div>
@@ -115,7 +115,7 @@
             <h4>Why Both Expected and Unexpected?</h4>
 
             <p>
-                Even authorised changes from your own MSP should generate an alert — you want a record. Onboarding and offboarding operations should be pre-announced and reconciled against the alert. Anything that <em>doesn't</em> match a known change window is an immediate investigation trigger.
+                Even authorised changes from your own MSP should generate an alert, you want a record. Onboarding and offboarding operations should be pre-announced and reconciled against the alert. Anything that <em>doesn't</em> match a known change window is an immediate investigation trigger.
             </p>
 
             <h4>The Query</h4>
@@ -160,7 +160,7 @@ AzureActivity
                 <tbody>
                     <tr>
                         <td><code>Caller</code></td>
-                        <td>Full UPN or service principal ID — is this your team?</td>
+                        <td>Full UPN or service principal ID, is this your team?</td>
                     </tr>
                     <tr>
                         <td><code>CallerIpAddress</code></td>
@@ -176,7 +176,7 @@ AzureActivity
                     </tr>
                     <tr>
                         <td><code>OperationNameValue</code></td>
-                        <td>Write vs. Delete — deletion is higher severity</td>
+                        <td>Write vs. Delete, deletion is higher severity</td>
                     </tr>
                 </tbody>
             </table>
@@ -197,7 +197,7 @@ AzureActivity
             <h4>What It Detects</h4>
 
             <p>
-                Changes to <code>Microsoft.ManagedServices</code> resources where the resource group <strong>does not match</strong> your known Sentinel resource group. This means a Lighthouse registration you don't own was created, modified, or deleted — in a subscription you monitor.
+                Changes to <code>Microsoft.ManagedServices</code> resources where the resource group <strong>does not match</strong> your known Sentinel resource group. This means a Lighthouse registration you don't own was created, modified, or deleted, in a subscription you monitor.
             </p>
             <p>
                 This is the higher-severity of the two detections. Legitimate Lighthouse delegations from unknown providers should be rare and always pre-approved. In practice, this fires when:
@@ -247,7 +247,7 @@ AzureActivity
             <h4>Triage Guidance</h4>
 
             <ol>
-                <li><strong>Identify the registration name</strong> in the <code>Registration</code> field — does this correspond to a known provider?</li>
+                <li><strong>Identify the registration name</strong> in the <code>Registration</code> field, does this correspond to a known provider?</li>
                 <li><strong>Contact the customer immediately.</strong> Ask whether they authorised a new Lighthouse delegation.</li>
                 <li><strong>Review the caller and source IP.</strong> If neither is recognisable, escalate to an incident.</li>
                 <li><strong>Do not wait for confirmation before checking for lateral movement.</strong> If this is an attacker establishing a backdoor, they may already be active.</li>
@@ -307,7 +307,7 @@ AzureActivity
             <h4>Limitations to Be Aware Of</h4>
 
             <ul>
-                <li>The <code>SentinelRG</code> lookup uses <code>toscalar()</code> — if multiple resource groups appear in your <code>Usage</code> table (e.g. in a multi-workspace setup), the <code>any()</code> aggregation will pick one non-deterministically. In that case, consider hardcoding the resource group name or extending the lookup logic.</li>
+                <li>The <code>SentinelRG</code> lookup uses <code>toscalar()</code>, if multiple resource groups appear in your <code>Usage</code> table (e.g. in a multi-workspace setup), the <code>any()</code> aggregation will pick one non-deterministically. In that case, consider hardcoding the resource group name or extending the lookup logic.</li>
                 <li>These rules look back only 1 hour, so they're designed for near-real-time detection. If you need historical coverage during initial deployment, adjust the <code>ago()</code> window for a one-time backfill query.</li>
                 <li><code>AzureActivity</code> logs are at the subscription level. Ensure your Lighthouse scope covers the subscriptions you want to monitor.</li>
             </ul>
@@ -320,12 +320,12 @@ AzureActivity
                 Azure Lighthouse is fundamentally a trust relationship expressed as a set of ARM resources. Like any trust relationship, its integrity depends on both parties maintaining control. From a threat modelling perspective:
             </p>
             <ul>
-                <li><strong>Delegation modifications are privileged operations</strong> — they change who has access to what. They should be as tightly monitored as IAM changes in any other context.</li>
+                <li><strong>Delegation modifications are privileged operations</strong>, they change who has access to what. They should be as tightly monitored as IAM changes in any other context.</li>
                 <li><strong>Service degradation is a valid attacker objective.</strong> Blinding a SOC before executing the next phase of an attack is a documented technique. Lighthouse tampering fits cleanly into this playbook.</li>
                 <li><strong>Your customers may not understand Lighthouse mechanics.</strong> Customer-side admins sometimes make changes without realising they're affecting managed service access. Detection here serves a dual purpose: security and service assurance.</li>
             </ul>
             <p>
-                Pairing these detections with a documented response procedure — and a clear communication path to the customer when an alert fires — turns a detection gap into a managed risk.
+                Pairing these detections with a documented response procedure, and a clear communication path to the customer when an alert fires, turns a detection gap into a managed risk.
             </p>
 
             <hr>
@@ -373,9 +373,9 @@ AzureActivity
 
             <p class="footer-note">
                 Download the KQL files:
-                <a href="Detecting-Azure-Lighthouse-Delegation-Tampering-MSP-Change.kql">Detection 1 — MSP Delegation Change</a>
+                <a href="Detecting-Azure-Lighthouse-Delegation-Tampering-MSP-Change.kql">Detection 1, MSP Delegation Change</a>
                 &nbsp;|&nbsp;
-                <a href="Detecting-Azure-Lighthouse-Delegation-Tampering-NonMSP-Change.kql">Detection 2 — Non-MSP Delegation Change</a>
+                <a href="Detecting-Azure-Lighthouse-Delegation-Tampering-NonMSP-Change.kql">Detection 2, Non-MSP Delegation Change</a>
             </p>
             <p>&nbsp;</p>
         </div>

@@ -1,0 +1,32 @@
+name: Validate Files
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.html'
+      - '**.kql'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install -g htmlhint
+
+      - name: Validate HTML files
+        run: |
+          find . -name "*.html" | while read file; do
+            echo "Checking $file"
+            htmlhint "$file"
+          done
+
+      - name: Check internal links
+        run: node scripts/check-links.js

@@ -19,7 +19,9 @@ jobs:
           node-version: '20'
       
       - name: Install dependencies
-        run: npm install -g htmlhint glob
+        run: |
+          npm install -g htmlhint
+          cd scripts && npm init -y && npm install glob
 
       - name: Validate HTML files
         run: |

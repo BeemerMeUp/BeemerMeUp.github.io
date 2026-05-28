@@ -1,0 +1,80 @@
+let lookbackShort = 1d;
+let lookbackLong = 30d;
+let extractSubnet = (ip: string) {
+    iff(
+        ip contains ":",
+        // IPv6: keep first 4 groups as /64 prefix; works for standard ISP assignments.
+        // Note: heavily compressed addresses (e.g. "::1") will not match correctly.
+        // These are loopback/link-local and should not appear in sign-in logs.
+        strcat_array(array_slice(split(ip, ':'), 0, 4), ':'),
+        // IPv4: keep first 3 octets as /24
+        strcat_array(array_slice(split(ip, '.'), 0, 3), '.')
+    )
+};
+// materialize() ensures SigninLogs is scanned once for the baseline period,
+// shared by both KnownIPs and BaselineAuthMethod.
+let FilteredBaseline = materialize(
+    SigninLogs
+    | where TimeGenerated between (ago(lookbackLong) .. ago(lookbackShort))
+    | where ResultType == 0
+    | where AuthenticationRequirement =~ "multiFactorAuthentication"
+);
+let KnownIPs = FilteredBaseline
+| extend IPSubnet = extractSubnet(IPAddress)
+| summarize KnownIPAddresses = make_set(IPAddress, 500), KnownSubnets = make_set(IPSubnet, 500) by UserPrincipalName;
+// Build auth method baseline per user
+let BaselineAuthMethod = FilteredBaseline
+| mv-expand todynamic(AuthenticationDetails) to typeof(dynamic)
+| extend authenticationMethod = tostring(AuthenticationDetails.authenticationMethod)
+| where isnotempty(authenticationMethod)
+| where authenticationMethod !in ("Password", "Previously satisfied")
+| summarize MethodCount = count() by UserPrincipalName, authenticationMethod
+| summarize arg_max(MethodCount, authenticationMethod) by UserPrincipalName
+| project UserPrincipalName, UsualAuthMethod = authenticationMethod;
+// Recent MFA denials
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType == 500121
+| where AuthenticationRequirement =~ "multiFactorAuthentication"
+| mv-expand todynamic(AuthenticationDetails) to typeof(dynamic)
+| extend
+    authenticationMethod = tostring(AuthenticationDetails.authenticationMethod),
+    authenticationStepResultDetail = tostring(AuthenticationDetails.authenticationStepResultDetail)
+| where isnotempty(authenticationMethod)
+| where authenticationMethod !in ("Password", "Previously satisfied")
+| where authenticationStepResultDetail in (
+    "MFA denied; invalid verification code entered too many times",
+    "MFA denied; user declined the authentication",
+    "MFA denied; user hung up the phone call without succeeding the authentication",
+    "MFA denied; user is blocked",
+    "MFA denied"
+  )
+// Carry only the columns needed downstream to avoid shuffling the full row set
+| summarize arg_max(TimeGenerated, IPAddress, Location, authenticationMethod, authenticationStepResultDetail, DeviceDetail) by UserPrincipalName
+| extend
+    UserName = tostring(split(UserPrincipalName, '@')[0]),
+    UPNSuffix = tostring(split(UserPrincipalName, '@')[1]),
+    IPSubnet = extractSubnet(IPAddress)
+// Join known IPs
+| join kind=leftouter KnownIPs on UserPrincipalName
+| extend IsKnownIP = set_has_element(KnownIPAddresses, IPAddress) or set_has_element(KnownSubnets, IPSubnet)
+// Join auth method baseline
+| join kind=leftouter BaselineAuthMethod on UserPrincipalName
+| extend IsUnusualAuthMethod = isnotempty(UsualAuthMethod) and authenticationMethod != UsualAuthMethod
+| extend AuthMethodSignal = case(
+    isempty(UsualAuthMethod),   "No baseline",
+    IsUnusualAuthMethod,        strcat("Unusual (expected: ", UsualAuthMethod, ")"),
+    "Usual method"
+  )
+| extend IsHighRiskDetail = authenticationStepResultDetail in (
+    "MFA denied; invalid verification code entered too many times",
+    "MFA denied; user is blocked"
+  )
+| where ((IsHighRiskDetail and (not(IsKnownIP) or IsUnusualAuthMethod))
+    or (not(IsHighRiskDetail) and not(IsKnownIP) and IsUnusualAuthMethod))
+    and isnotempty(UsualAuthMethod)
+| sort by TimeGenerated desc
+| project TimeGenerated, UserPrincipalName, UserName, UPNSuffix, IPAddress, Location,
+          RiskSignal = iff(IsKnownIP, "Known IP", "Unknown IP"),
+          authenticationMethod, UsualAuthMethod, IsUnusualAuthMethod, AuthMethodSignal, IsHighRiskDetail,
+          authenticationStepResultDetail, DeviceDetail

@@ -125,7 +125,7 @@
 | extend ForwardDomain = tolower(extract(@"@([^@]+)$", 1, Email))
 | join kind=leftanti ownDomains on $left.ForwardDomain == $right.SearchKey</code></pre>
         
-        <p>The full Detection can be found on my <a href="https://github.com/BeemerMeUp/BeemerMeUp.github.io/blob/main/Forward-or-Redirect-Created-or-Updated.kql">Github Page</a>.</p>
+        <p>The full Detection can be found on my <a href="https://github.com/BeemerMeUp/BeemerMeUp.github.io/blob/main/KQL/Forward-or-Redirect-Created-or-Updated.kql">Github Page</a>.</p>
         
         <hr>
         

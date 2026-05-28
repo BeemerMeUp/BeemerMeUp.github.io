@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Detecting Suspicious MFA Behavior in Microsoft Sentinel</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="A KQL analytic rule for Microsoft Sentinel that combines a 30-day IP and authentication method baseline to detect MFA fatigue attacks in Entra ID sign-in logs.">
+    <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+    <header class="site-header">
+      <div class="container header-inner">
+      <div class="brand">
+        <a href="/" class="logo">BeemerMeUp</a>
+        <p class="tagline">Code, Thoughts, notes & experiments</p>
+      </div>
+      <nav class="nav">
+        <a href="/" class="nav-link active">Blog</a>
+        <a href="#about" class="nav-link">About</a>
+        <a href="https://github.com/BeemerMeUp" class="nav-link" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+    </header>
+<main class="site-main">
+    <div class="container content">
+        <picture>
+            <source srcset="assets/images/BlogBanner-02-s.png" media="(max-width: 900px)"/>
+            <img src="assets/images/Detecting-Suspicious-MFA-Behavior.png" alt="Banner" title="Banner">
+        </picture>
+        <h1>Detecting Suspicious MFA Behavior in Microsoft Sentinel</h1>
+        <h2>Using a 30-Day IP and Auth Method Baseline to Surface MFA Fatigue Attacks</h2>
+        <div class="meta">
+            <span class="inline-label">Category</span> Identity Security · Microsoft Sentinel · KQL
+        </div>
+
+        <p>
+            As most customer have not embraced Phishing resistant MFA, you still see a lot of MFA abuse in one form or another.
+            MFA denial events in your sign-in logs are noisy. Users mistype codes, forget to check their phone, or decline by accident.
+            A single denied prompt tells you almost nothing on its own. But a denial from an IP the user has never signed in from before,
+            using an authentication method they have never used, is much harder to explain away.
+        </p>
+
+        <p>
+            This post walks through a Microsoft Sentinel analytic rule that combines two signals to cut through that noise:
+            a per-user IP and subnet baseline built from 30 days of successful MFA sign-ins,
+            and a per-user authentication method baseline that tracks what MFA method each person normally uses.
+        </p>
+
+        <div class="callout">
+            <strong>Goal:</strong> detect MFA denials that are location-anomalous, method-anomalous, or both,
+            separating active credential attack patterns from the everyday background noise of MFA errors.
+        </div>
+
+        <hr>
+
+        <h3>The attack this rule targets</h3>
+
+        <p>
+            Once an attacker has a valid username and password, they still need to get past MFA.
+            The most direct approach is to trigger authentication prompts repeatedly until the user approves one.
+            Microsoft Authenticator sends a push notification each time a sign-in attempt is made.
+            An attacker can send dozens of these in a few minutes. Some users eventually tap "Approve" just to make them stop.
+        </p>
+
+        <p>
+            This technique was central to the Uber breach in September 2022.
+            An attacker obtained a contractor's credentials and then sent repeated MFA push notifications to the user's phone.
+            When the user continued to decline, the attacker contacted them directly on WhatsApp, claiming to be Uber IT support,
+            and asked them to accept the next prompt. The user did. That combination of credential theft and repeated prompting
+            resulted in access to Uber's internal tooling and infrastructure.
+        </p>
+
+        <p>
+            A second pattern this rule catches is method switching. If an attacker has credentials but cannot trigger push notifications
+            on the user's registered device, they may attempt to force a fallback to SMS or a phone call.
+            A user who has authenticated exclusively with Microsoft Authenticator push for 12 months
+            suddenly receiving an SMS code request from an unknown IP is a concrete signal worth investigating.
+        </p>
+
+        <p>
+            ResultType <code>500121</code> in Entra ID sign-in logs means the MFA step was explicitly denied.
+            This is distinct from session timeouts or expired codes. It means the authentication request reached the user or device and was rejected.
+            That distinction matters: it confirms the attacker holds valid credentials and an active MFA prompt was sent and refused.
+        </p>
+
+        <hr>
+
+        <h3>Detection overview</h3>
+
+        <p>The analytic rule is built around three components:</p>
+
+        <ul>
+            <li><strong>A 30-day baseline of successful MFA sign-ins per user</strong>, used to build known IP and subnet sets and identify each user's typical authentication method.</li>
+            <li><strong>A 1-hour window of MFA denials</strong> (ResultType 500121) filtered to specific denial reasons that indicate active attack activity rather than routine user error.</li>
+            <li><strong>A scoring filter</strong> that only surfaces events where at least one anomaly signal is present, with stricter requirements for lower-risk denial types.</li>
+        </ul>
+
+        <div>
+            <span class="pill">SigninLogs</span>
+            <span class="pill">ResultType 500121</span>
+            <span class="pill">materialize()</span>
+            <span class="pill">extractSubnet()</span>
+            <span class="pill">arg_max()</span>
+        </div>
+
+        <hr>
+
+        <h3>The KQL analytic rule</h3>
+
+        <p>
+            The following query is intended to run as an analytic rule in Microsoft Sentinel,
+            using the <code>SigninLogs</code> table from the Microsoft Entra ID connector.
+        </p>
+
+        <pre><code class="language-kusto">
+let lookbackShort = 1d;
+let lookbackLong = 30d;
+let extractSubnet = (ip: string) {
+    iff(
+        ip contains ":",
+        strcat_array(array_slice(split(ip, ':'), 0, 4), ':'),
+        strcat_array(array_slice(split(ip, '.'), 0, 3), '.')
+    )
+};
+let FilteredBaseline = materialize(
+    SigninLogs
+    | where TimeGenerated between (ago(lookbackLong) .. ago(lookbackShort))
+    | where ResultType == 0
+    | where AuthenticationRequirement =~ "multiFactorAuthentication"
+);
+let KnownIPs = FilteredBaseline
+| extend IPSubnet = extractSubnet(IPAddress)
+| summarize KnownIPAddresses = make_set(IPAddress, 500), KnownSubnets = make_set(IPSubnet, 500) by UserPrincipalName;
+let BaselineAuthMethod = FilteredBaseline
+| mv-expand todynamic(AuthenticationDetails) to typeof(dynamic)
+| extend authenticationMethod = tostring(AuthenticationDetails.authenticationMethod)
+| where isnotempty(authenticationMethod)
+| where authenticationMethod !in ("Password", "Previously satisfied")
+| summarize MethodCount = count() by UserPrincipalName, authenticationMethod
+| summarize arg_max(MethodCount, authenticationMethod) by UserPrincipalName
+| project UserPrincipalName, UsualAuthMethod = authenticationMethod;
+SigninLogs
+| where TimeGenerated > ago(1h)
+| where ResultType == 500121
+| where AuthenticationRequirement =~ "multiFactorAuthentication"
+| mv-expand todynamic(AuthenticationDetails) to typeof(dynamic)
+| extend
+    authenticationMethod = tostring(AuthenticationDetails.authenticationMethod),
+    authenticationStepResultDetail = tostring(AuthenticationDetails.authenticationStepResultDetail)
+| where isnotempty(authenticationMethod)
+| where authenticationMethod !in ("Password", "Previously satisfied")
+| where authenticationStepResultDetail in (
+    "MFA denied; invalid verification code entered too many times",
+    "MFA denied; user declined the authentication",
+    "MFA denied; user hung up the phone call without succeeding the authentication",
+    "MFA denied; user is blocked",
+    "MFA denied"
+  )
+| summarize arg_max(TimeGenerated, IPAddress, Location, authenticationMethod, authenticationStepResultDetail, DeviceDetail) by UserPrincipalName
+| extend
+    UserName = tostring(split(UserPrincipalName, '@')[0]),
+    UPNSuffix = tostring(split(UserPrincipalName, '@')[1]),
+    IPSubnet = extractSubnet(IPAddress)
+| join kind=leftouter KnownIPs on UserPrincipalName
+| extend IsKnownIP = set_has_element(KnownIPAddresses, IPAddress) or set_has_element(KnownSubnets, IPSubnet)
+| join kind=leftouter BaselineAuthMethod on UserPrincipalName
+| extend IsUnusualAuthMethod = isnotempty(UsualAuthMethod) and authenticationMethod != UsualAuthMethod
+| extend AuthMethodSignal = case(
+    isempty(UsualAuthMethod),   "No baseline",
+    IsUnusualAuthMethod,        strcat("Unusual (expected: ", UsualAuthMethod, ")"),
+    "Usual method"
+  )
+| extend IsHighRiskDetail = authenticationStepResultDetail in (
+    "MFA denied; invalid verification code entered too many times",
+    "MFA denied; user is blocked"
+  )
+| where ((IsHighRiskDetail and (not(IsKnownIP) or IsUnusualAuthMethod))
+    or (not(IsHighRiskDetail) and not(IsKnownIP) and IsUnusualAuthMethod))
+    and isnotempty(UsualAuthMethod)
+| sort by TimeGenerated desc
+| project TimeGenerated, UserPrincipalName, UserName, UPNSuffix, IPAddress, Location,
+          RiskSignal = iff(IsKnownIP, "Known IP", "Unknown IP"),
+          authenticationMethod, UsualAuthMethod, IsUnusualAuthMethod, AuthMethodSignal, IsHighRiskDetail,
+          authenticationStepResultDetail, DeviceDetail
+        </code></pre>
+
+        <hr>
+
+        <h3>How the detection works</h3>
+
+        <h4>1. One baseline scan, shared across two lookups</h4>
+
+        <p>
+            The query wraps the 30-day baseline in a <code>materialize()</code> call and stores it as <code>FilteredBaseline</code>.
+            Both the IP lookup and the auth method lookup draw from this same result,
+            so Sentinel only scans <code>SigninLogs</code> once for the baseline period.
+            Without <code>materialize()</code>, the engine would scan the table twice and double your query cost.
+        </p>
+
+        <p>The baseline only includes records where:</p>
+
+        <ul>
+            <li><code>ResultType == 0</code>: successful sign-ins only.</li>
+            <li><code>AuthenticationRequirement =~ "multiFactorAuthentication"</code>: sessions that actually required and completed MFA.</li>
+            <li>The time window falls between 30 days ago and 1 day ago, giving a stable history without mixing in today's activity.</li>
+        </ul>
+
+        <h4>2. Building the IP baseline</h4>
+
+        <p>
+            The <code>KnownIPs</code> block collects up to 500 individual IP addresses and up to 500 subnets per user
+            using the <code>extractSubnet()</code> function.
+        </p>
+
+        <p>
+            Subnet matching exists because ISPs often rotate IP addresses within the same /24 block (IPv4) or /64 prefix (IPv6).
+            A user signing in from a new address in the same home network is far less suspicious than one appearing from a foreign country.
+            Keeping subnet history alongside exact IPs reduces false positives from routine address rotation while preserving geographic signal.
+        </p>
+
+        <p>
+            The function handles both IPv4 (first three octets) and IPv6 (first four groups).
+            Heavily compressed IPv6 addresses such as <code>::1</code> are loopback addresses
+            and should not appear in real sign-in traffic.
+        </p>
+
+        <h4>3. Building the auth method baseline</h4>
+
+        <p>
+            The <code>BaselineAuthMethod</code> block identifies each user's most-used MFA method over the 30-day window.
+            It filters out <code>Password</code> and <code>Previously satisfied</code> from the authentication details,
+            since those are not genuine second-factor methods.
+            It then selects the method with the highest event count per user via <code>arg_max()</code>.
+        </p>
+
+        <p>
+            The result is one row per user: their name and their typical MFA method.
+            Someone who authenticated 200 times with Microsoft Authenticator push will show <code>UsualAuthMethod = "Microsoft Authenticator"</code>.
+            If their next denial event shows an SMS attempt, that registers as an anomaly.
+        </p>
+
+        <h4>4. Capturing recent denials</h4>
+
+        <p>
+            The main query looks at the last hour of <code>SigninLogs</code> where <code>ResultType == 500121</code>.
+            It expands the <code>AuthenticationDetails</code> array to get the denial reason and filters to five specific strings:
+        </p>
+
+        <ul>
+            <li><strong>MFA denied; invalid verification code entered too many times</strong>: the attacker is guessing codes, not just flooding push prompts.</li>
+            <li><strong>MFA denied; user declined the authentication</strong>: the user saw the prompt and explicitly rejected it.</li>
+            <li><strong>MFA denied; user hung up the phone call without succeeding the authentication</strong>: the attacker tried a phone call fallback.</li>
+            <li><strong>MFA denied; user is blocked</strong>: the account hit the MFA lockout threshold from repeated attempts.</li>
+            <li><strong>MFA denied</strong>: a generic denial where a more specific reason is not available in the log.</li>
+        </ul>
+
+        <p>
+            The query then takes only the most recent denial per user with <code>arg_max(TimeGenerated, ...)</code>.
+            This keeps the output clean: one row per affected account, representing the latest event.
+        </p>
+
+        <h4>5. Joining baseline data and computing signals</h4>
+
+        <p>
+            Both <code>KnownIPs</code> and <code>BaselineAuthMethod</code> are joined to each denial event.
+            The query then computes two boolean fields:
+        </p>
+
+        <ul>
+            <li><strong><code>IsKnownIP</code></strong>: true if the denying IP appears in the user's known IP set, or if its subnet appears in the known subnet set.</li>
+            <li><strong><code>IsUnusualAuthMethod</code></strong>: true if a baseline method exists and the current denial method differs from it.</li>
+        </ul>
+
+        <p>
+            A third field, <code>IsHighRiskDetail</code>, flags the two denial reasons that indicate the most aggressive attacker behavior:
+            too many invalid codes (active code guessing) and account blockage (lockout from sustained attempts).
+        </p>
+
+        <h4>6. The filter logic</h4>
+
+        <p>
+            The final <code>where</code> clause applies different thresholds depending on the denial reason:
+        </p>
+
+        <ul>
+            <li>
+                <strong>High-risk denials</strong> (invalid codes, account blocked): alert if the IP is unknown <em>or</em> the auth method is unusual.
+                One anomaly signal is enough because the denial reason itself already carries strong evidence of attacker activity.
+            </li>
+            <li>
+                <strong>Lower-risk denials</strong> (user declined, hung up, generic): require the IP to be unknown <em>and</em> the auth method to be unusual.
+                Both signals must be present to compensate for the weaker inherent signal of the denial type alone.
+            </li>
+        </ul>
+
+        <p>
+            The query also requires <code>isnotempty(UsualAuthMethod)</code>.
+            Accounts with no established MFA history are excluded entirely.
+            New accounts or rarely-used accounts produce unreliable baselines and would dominate the output with false positives.
+        </p>
+
+        <hr>
+
+        <h3>Tuning and operational guidance</h3>
+
+        <h4>Lookback windows</h4>
+
+        <p>
+            The 30-day baseline works well for users who sign in regularly.
+            For accounts that are active only a few times a month, 30 days may not produce a meaningful baseline.
+            Consider extending <code>lookbackLong</code> to 60 or 90 days, or adding a minimum event count before the auth method baseline is considered valid.
+        </p>
+
+        <p>
+            The 1-hour detection window keeps the rule tightly focused on active attack sessions.
+            If you want to catch slower campaigns that spread attempts across several hours,
+            you can increase this window, but expect more noise from benign user behavior in return.
+        </p>
+
+        <h4>Accounts without a baseline</h4>
+
+        <p>
+            The rule skips users with no <code>UsualAuthMethod</code>. This is intentional.
+            You can handle these separately with a simpler rule that alerts on any <code>500121</code> event
+            from an account with fewer than, say, 10 successful MFA sign-ins in the last 30 days.
+            That keeps this rule focused on confirmed behavioral anomalies rather than sparse data.
+        </p>
+
+        <h4>Investigating an alert</h4>
+
+        <p>When this rule fires, a few checks help you prioritize quickly:</p>
+
+        <ul>
+            <li>Is the account privileged? Admin accounts and service owners warrant immediate escalation regardless of other context.</li>
+            <li>Does the IP resolve to a known datacenter, VPN provider, or anonymizing proxy? This strongly suggests attacker infrastructure rather than a traveling employee.</li>
+            <li>Is <code>authenticationStepResultDetail</code> showing "user is blocked"? That means the account hit the MFA lockout threshold, confirming sustained and repeated attack activity.</li>
+            <li>Is <code>IsUnusualAuthMethod</code> true? Check what method is being attempted. A fallback from Authenticator push to phone call or SMS is a concrete indicator of method-switch behavior.</li>
+            <li>Has the user's password been changed recently? A recent password change combined with a method-anomalous denial is a strong indicator of active credential compromise.</li>
+        </ul>
+
+        <h4>Reducing false positives</h4>
+
+        <p>
+            The most common legitimate scenario that triggers this rule is a user signing in from an unfamiliar location with an MFA app reinstalled on a new device.
+            A reinstall can change both the effective IP and the auth method registration state.
+            Check whether the denial is isolated or part of a series: a single declined prompt from a new hotel IP is different from 20 failed attempts against the same account over 15 minutes.
+        </p>
+
+        <p>
+            You can exclude known corporate IP ranges or office egress addresses from the unknown-IP signal
+            by adjusting the <code>IsKnownIP</code> logic to check against a Sentinel watchlist alongside the per-user history.
+        </p>
+
+        <hr>
+
+        <h3>Closing thoughts</h3>
+
+        <p>
+            MFA is effective, but attackers who hold valid credentials treat it as an obstacle to work around, not a wall.
+            Repeated push flooding works often enough to remain a standard technique, and it is cheap to execute at scale.
+        </p>
+
+        <p>
+            The strength of this detection is that it requires context, not just volume.
+            A single denial from a known IP using the user's normal method does not fire the rule.
+            A single denial from an unknown IP with an unfamiliar auth method does.
+            That distinction is what makes the difference between a rule that generates investigations and one that generates alert fatigue.
+        </p>
+
+        <p class="footer-note">
+            The KQL file is available on <a href="https://github.com/BeemerMeUp/BeemerMeUp.github.io/blob/main/KQL/Detecting-Suspicious-MFA-Behavior.kql">GitHub</a>.
+            Adapt the subnet extraction logic, lookback windows, and denial reason filter to match your environment and log retention policies.
+        </p>
+
+        <p>&nbsp;</p>
+    </div>
+</main>
+</body>
+</html>

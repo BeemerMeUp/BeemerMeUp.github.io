@@ -1,0 +1,107 @@
+AgentName,Ecosystem,Package,VulnId,Cve,Introduced,Fixed,LastAffected,Severity,InKEV,Summary
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-2jjv-qf24-vfm4,CVE-2025-59828,,1.0.39,,HIGH,false,Claude Code Vulnerable to Arbitrary Code Execution via Plugin Autoloading with Specific Yarn Versions
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-4fgq-fpq9-mr3g,CVE-2025-59536,,1.0.111,,HIGH,false,Claude Code can execute commands prior to the startup trust dialog 
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-4q92-rfm6-2cqx,CVE-2026-25724,,2.1.7,,LOW,false,Claude Code has Permission Deny Bypass Through Symbolic Links
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-4vp2-6q8c-pvq2,CVE-2026-46406,2.1.59,2.1.128,,MODERATE,false,@anthropic-ai/claude-code has an Insecure Temporary File in /copy Command that Enables Response Disclosure and Symlink-Based File Write
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-5cwg-9f6j-9jvx,CVE-2026-35603,,2.1.75,,MODERATE,false,Claude Code: Insecure System-Wide Configuration Loading Enables Local Privilege Escalation on Windows
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-5hhx-v7f6-x7gv,CVE-2025-65099,,1.0.39,,HIGH,false,Claude Code vulnerable to command execution prior to startup trust dialog
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-66m2-gx93-v996,CVE-2025-59829,,1.0.120,,LOW,false,Claude Code permission deny bypass through symlink
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-66q4-vfjg-2qhh,CVE-2026-25722,,2.0.57,,HIGH,false,Claude Code Vulnerable to Command Injection via Directory Change Bypasses Write Protection
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-7835-87q9-rgvv,CVE-2026-55607,2.1.38,2.1.163,,HIGH,false,Claude Code: Sandbox Escape via Git Worktree Path Confusion Allows Unsandboxed Code Execution
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-7mv8-j34q-vp7q,CVE-2025-64755,,2.0.31,,HIGH,false,@anthropic-ai/claude-code has Sed Command Validation Bypass that Allows Arbitrary File Writes
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-9f65-56v6-gxw7,CVE-2025-52882,0.2.116,1.0.24,,HIGH,false,Claude Code Improper Authorization via websocket connections from arbitrary origins
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-ff64-7w26-62rf,CVE-2026-25725,,2.1.2,,HIGH,false,Claude Code has Sandbox Escape via Persistent Configuration Injection in settings.json
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-fg94-h982-f3mm,CVE-2026-54316,0.2.54,2.1.163,,MODERATE,false,Claude Code: Out-of-Band Data Exfiltration via Pre-Approved HuggingFace Domain in WebFetch
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-j4h9-wv2m-wrf7,CVE-2025-59041,,1.0.105,,HIGH,false,Claude Code vulnerable to arbitrary code execution caused by maliciously configured git email 
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-jh7p-qr78-84p7,CVE-2026-21852,,2.0.65,,MODERATE,false,Claude Code Leaks Data via Malicious Environment Configuration Before Trust Confirmation
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-mhg7-666j-cqg4,CVE-2026-25723,,2.0.55,,HIGH,false,Claude Code Vulnerable to Command Injection via Piped sed Command Bypasses File Write Restrictions
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-mmgp-wc2j-qcv7,CVE-2026-33068,,2.1.53,,HIGH,false,Claude Code has a Workspace Trust Dialog Bypass via Repo-Controlled Settings File
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-ph6w-f82w-28w6,GHSA-ph6w-f82w-28w6,,1.0.87,,HIGH,false,Claude Code Vulnerable to Arbitrary Code Execution Due to Insufficient Startup Warning
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-pmw4-pwvc-3hx2,CVE-2025-54794,,0.2.111,,HIGH,false,Claude Code Research Preview has a Path Restriction Bypass which could allow unauthorized file access
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-pq7j-f95f-qfcv,CVE-2026-86063,,2.1.179,,HIGH,false,Claude Code: Plugin Hash Pin Bypass Allows Bypass of Hash Pinning
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-q5hj-mxqh-vv77,CVE-2026-40068,2.1.63,2.1.84,,HIGH,false,Claude Code: Trust Dialog Bypass via Git Worktree Spoofing Allows Arbitrary Code Execution
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-q728-gf8j-w49r,CVE-2026-24053,,2.0.74,,HIGH,false,Claude Code has a Path Restriction Bypass via ZSH Clobber which Allows Arbitrary File Writes
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-qgqw-h4xq-7w8w,CVE-2026-24887,,2.0.72,,HIGH,false,Claude Code has a Command Injection in find Command Bypasses User Approval Prompt
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-qxfv-fcpc-w36x,CVE-2025-58764,,1.0.105,,HIGH,false,Claude Code rg vulnerability does not protect against approval prompt bypass
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-vhw5-3g5m-8ggf,CVE-2026-24052,,1.0.111,,HIGH,false,Claude Code has a Domain Validation Bypass which Allows Automatic Requests to Attacker-Controlled Domains
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-vp62-r36r-9xqp,CVE-2026-39861,,2.1.64,,HIGH,false,Claude Code: Sandbox Escape via Symlink Following Allows Arbitrary File Write Outside Workspace
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-x56v-x2h6-7j34,CVE-2025-54795,,1.0.20,,HIGH,false,Claude Code echo command allowed bypass of user approval prompt for command execution
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-x5gv-jw7f-j6xj,CVE-2025-55284,,1.0.4,,HIGH,false,Claude Code's Permissive Default Allowlist Enables Unauthorized File Read and Network Exfiltration in Claude Code
+VSCode Claude Code Extension,npm,@anthropic-ai/claude-code,GHSA-xq4m-mc3c-vvg3,CVE-2025-66032,,1.0.93,,HIGH,false,Claude Code Command Validation Bypass Allows Arbitrary Code Execution
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-2jjv-qf24-vfm4,CVE-2025-59828,,1.0.39,,HIGH,false,Claude Code Vulnerable to Arbitrary Code Execution via Plugin Autoloading with Specific Yarn Versions
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-4fgq-fpq9-mr3g,CVE-2025-59536,,1.0.111,,HIGH,false,Claude Code can execute commands prior to the startup trust dialog 
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-4q92-rfm6-2cqx,CVE-2026-25724,,2.1.7,,LOW,false,Claude Code has Permission Deny Bypass Through Symbolic Links
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-4vp2-6q8c-pvq2,CVE-2026-46406,2.1.59,2.1.128,,MODERATE,false,@anthropic-ai/claude-code has an Insecure Temporary File in /copy Command that Enables Response Disclosure and Symlink-Based File Write
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-5cwg-9f6j-9jvx,CVE-2026-35603,,2.1.75,,MODERATE,false,Claude Code: Insecure System-Wide Configuration Loading Enables Local Privilege Escalation on Windows
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-5hhx-v7f6-x7gv,CVE-2025-65099,,1.0.39,,HIGH,false,Claude Code vulnerable to command execution prior to startup trust dialog
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-66m2-gx93-v996,CVE-2025-59829,,1.0.120,,LOW,false,Claude Code permission deny bypass through symlink
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-66q4-vfjg-2qhh,CVE-2026-25722,,2.0.57,,HIGH,false,Claude Code Vulnerable to Command Injection via Directory Change Bypasses Write Protection
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-7835-87q9-rgvv,CVE-2026-55607,2.1.38,2.1.163,,HIGH,false,Claude Code: Sandbox Escape via Git Worktree Path Confusion Allows Unsandboxed Code Execution
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-7mv8-j34q-vp7q,CVE-2025-64755,,2.0.31,,HIGH,false,@anthropic-ai/claude-code has Sed Command Validation Bypass that Allows Arbitrary File Writes
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-9f65-56v6-gxw7,CVE-2025-52882,0.2.116,1.0.24,,HIGH,false,Claude Code Improper Authorization via websocket connections from arbitrary origins
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-ff64-7w26-62rf,CVE-2026-25725,,2.1.2,,HIGH,false,Claude Code has Sandbox Escape via Persistent Configuration Injection in settings.json
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-fg94-h982-f3mm,CVE-2026-54316,0.2.54,2.1.163,,MODERATE,false,Claude Code: Out-of-Band Data Exfiltration via Pre-Approved HuggingFace Domain in WebFetch
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-j4h9-wv2m-wrf7,CVE-2025-59041,,1.0.105,,HIGH,false,Claude Code vulnerable to arbitrary code execution caused by maliciously configured git email 
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-jh7p-qr78-84p7,CVE-2026-21852,,2.0.65,,MODERATE,false,Claude Code Leaks Data via Malicious Environment Configuration Before Trust Confirmation
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-mhg7-666j-cqg4,CVE-2026-25723,,2.0.55,,HIGH,false,Claude Code Vulnerable to Command Injection via Piped sed Command Bypasses File Write Restrictions
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-mmgp-wc2j-qcv7,CVE-2026-33068,,2.1.53,,HIGH,false,Claude Code has a Workspace Trust Dialog Bypass via Repo-Controlled Settings File
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-ph6w-f82w-28w6,GHSA-ph6w-f82w-28w6,,1.0.87,,HIGH,false,Claude Code Vulnerable to Arbitrary Code Execution Due to Insufficient Startup Warning
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-pmw4-pwvc-3hx2,CVE-2025-54794,,0.2.111,,HIGH,false,Claude Code Research Preview has a Path Restriction Bypass which could allow unauthorized file access
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-pq7j-f95f-qfcv,CVE-2026-86063,,2.1.179,,HIGH,false,Claude Code: Plugin Hash Pin Bypass Allows Bypass of Hash Pinning
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-q5hj-mxqh-vv77,CVE-2026-40068,2.1.63,2.1.84,,HIGH,false,Claude Code: Trust Dialog Bypass via Git Worktree Spoofing Allows Arbitrary Code Execution
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-q728-gf8j-w49r,CVE-2026-24053,,2.0.74,,HIGH,false,Claude Code has a Path Restriction Bypass via ZSH Clobber which Allows Arbitrary File Writes
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-qgqw-h4xq-7w8w,CVE-2026-24887,,2.0.72,,HIGH,false,Claude Code has a Command Injection in find Command Bypasses User Approval Prompt
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-qxfv-fcpc-w36x,CVE-2025-58764,,1.0.105,,HIGH,false,Claude Code rg vulnerability does not protect against approval prompt bypass
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-vhw5-3g5m-8ggf,CVE-2026-24052,,1.0.111,,HIGH,false,Claude Code has a Domain Validation Bypass which Allows Automatic Requests to Attacker-Controlled Domains
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-vp62-r36r-9xqp,CVE-2026-39861,,2.1.64,,HIGH,false,Claude Code: Sandbox Escape via Symlink Following Allows Arbitrary File Write Outside Workspace
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-x56v-x2h6-7j34,CVE-2025-54795,,1.0.20,,HIGH,false,Claude Code echo command allowed bypass of user approval prompt for command execution
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-x5gv-jw7f-j6xj,CVE-2025-55284,,1.0.4,,HIGH,false,Claude Code's Permissive Default Allowlist Enables Unauthorized File Read and Network Exfiltration in Claude Code
+Claude Code,npm,@anthropic-ai/claude-code,GHSA-xq4m-mc3c-vvg3,CVE-2025-66032,,1.0.93,,HIGH,false,Claude Code Command Validation Bypass Allows Arbitrary Code Execution
+Codex CLI,npm,@openai/codex,GHSA-w5fx-fh39-j5rw,CVE-2025-59532,0.2.0,0.39.0,,HIGH,false,Codex has sandbox bypass due to bug in path configuration logic
+Codex CLI,npm,@openai/codex,GHSA-xrxf-jgv3-qmrm,CVE-2025-61260,,,0.23.0,CRITICAL,false,OpenAI Codex CLI enables code execution through malicious MCP (Model Context Protocol) configuration files
+Gemini CLI,npm,@google/gemini-cli,GHSA-wpqr-6v78-jr5g,CVE-2026-12537,,0.39.1,,CRITICAL,false,Gemini CLI: Remote Code Execution via workspace trust and tool allowlisting bypasses
+Gemini CLI,npm,@google/gemini-cli,GHSA-wpqr-6v78-jr5g,CVE-2026-12537,0.40.0-preview.2,0.40.0-preview.3,,CRITICAL,false,Gemini CLI: Remote Code Execution via workspace trust and tool allowlisting bypasses
+,npm,mcp-remote,GHSA-6xpm-ggf7-wc3p,CVE-2025-6514,0.0.5,0.1.16,,CRITICAL,false,mcp-remote exposed to OS command injection via untrusted MCP server connections
+,npm,@modelcontextprotocol/inspector,GHSA-7f8r-222p-6f5g,CVE-2025-49596,,0.14.1,,CRITICAL,false,MCP Inspector proxy server lacks authentication between the Inspector client and proxy
+,npm,@modelcontextprotocol/inspector,GHSA-g9hg-qhmf-q45m,CVE-2025-58444,,0.16.6,,HIGH,false,MCP Inspector is Vulnerable to Potential Command Execution via XSS When Connecting to an Untrusted MCP Server
+,npm,@modelcontextprotocol/sdk,GHSA-22jm-h49p-29qw,CVE-2026-111767,1.24.0,1.32.0,,HIGH,false,MCP TypeScript SDK: Experimental tasks were not tied to the session that created them
+,npm,@modelcontextprotocol/sdk,GHSA-345p-7cg4-v4c7,CVE-2026-25536,1.10.0,1.26.0,,HIGH,false,@modelcontextprotocol/sdk has cross-client data leak via shared server/transport instance reuse
+,npm,@modelcontextprotocol/sdk,GHSA-46jr-4wx8-v453,CVE-2026-111768,1.3.0,1.32.0,,HIGH,false,MCP TypeScript SDK: One HTTP request within the default size limit could exhaust server memory during validation
+,npm,@modelcontextprotocol/sdk,GHSA-6prh-2h8m-c8cw,CVE-2026-111769,,1.32.0,,MODERATE,false,MCP TypeScript client SDK: HTTP client transports and OAuth requests followed cross-origin redirects and re-sent custom headers and request bodies
+,npm,@modelcontextprotocol/sdk,GHSA-6qxp-vccf-f47h,CVE-2026-104850,1.12.0,1.31.0,,HIGH,false,MCP TypeScript SDK: OAuth client could send credentials to an authorization server chosen by the MCP server
+,npm,@modelcontextprotocol/sdk,GHSA-8r9q-7v3j-jr4g,CVE-2026-0621,1.3.0,1.25.2,,HIGH,false,Anthropic's MCP TypeScript SDK has a ReDoS vulnerability
+,npm,@modelcontextprotocol/sdk,GHSA-f897-62hf-6gxq,GHSA-f897-62hf-6gxq,1.10.0,1.30.1,,HIGH,false,MCP TypeScript SDK: HTTP server transports and handlers did not limit request body size or JSON-RPC batch length
+,npm,@modelcontextprotocol/sdk,GHSA-rvq5-wwqv-78pq,CVE-2026-111771,1.6.0,1.32.0,,MODERATE,false,MCP TypeScript SDK: Server bearer authentication accepted tokens issued for another service
+,npm,@modelcontextprotocol/sdk,GHSA-w48q-cv73-mx4w,CVE-2025-66414,,1.24.0,,HIGH,false,Model Context Protocol (MCP) TypeScript SDK does not enable DNS rebinding protection by default
+,npm,@modelcontextprotocol/server-filesystem,GHSA-hc55-p739-j48w,CVE-2025-53110,,,0.6.2,HIGH,false,@modelcontextprotocol/server-filesystem vulnerability allows for path validation bypass via colliding path prefix
+,npm,@modelcontextprotocol/server-filesystem,GHSA-hc55-p739-j48w,CVE-2025-53110,2025.1.14,2025.7.1,,HIGH,false,@modelcontextprotocol/server-filesystem vulnerability allows for path validation bypass via colliding path prefix
+,npm,@modelcontextprotocol/server-filesystem,GHSA-q66q-fx2p-7w4m,CVE-2025-53109,,,0.6.2,HIGH,false,@modelcontextprotocol/server-filesystem allows for path validation bypass via prefix matching and symlink handling
+,npm,@modelcontextprotocol/server-filesystem,GHSA-q66q-fx2p-7w4m,CVE-2025-53109,2025.1.14,2025.7.1,,HIGH,false,@modelcontextprotocol/server-filesystem allows for path validation bypass via prefix matching and symlink handling
+,PyPI,mcp,GHSA-3qhf-m339-9g5v,CVE-2025-53366,,1.9.4,,HIGH,false,"MCP Python SDK vulnerability in the FastMCP Server causes validation error, leading to DoS"
+,PyPI,mcp,GHSA-5h93-6whr-6q8j,CVE-2026-116685,2.0.0,2.2.0,,MODERATE,false,Model Context Protocol Python SDK: HTTP client transports followed cross-origin redirects carrying custom headers and bodies
+,PyPI,mcp,GHSA-5h93-6whr-6q8j,CVE-2026-116685,1.8.0,1.30.0,,MODERATE,false,Model Context Protocol Python SDK: HTTP client transports followed cross-origin redirects carrying custom headers and bodies
+,PyPI,mcp,GHSA-84m7-p3x7-pcfv,CVE-2026-59951,1.8.0,1.30.0,,MODERATE,false,MCP Python SDK: Unbounded Session Accumulation in StreamableHTTP Transport Enables Resource Exhaustion
+,PyPI,mcp,GHSA-84m7-p3x7-pcfv,CVE-2026-59951,2.0.0,2.2.0,,MODERATE,false,MCP Python SDK: Unbounded Session Accumulation in StreamableHTTP Transport Enables Resource Exhaustion
+,PyPI,mcp,GHSA-9h52-p55h-vw2f,CVE-2025-66416,,1.23.0,,HIGH,false,Model Context Protocol (MCP) Python SDK does not enable DNS rebinding protection by default
+,PyPI,mcp,GHSA-hvrp-rf83-w775,CVE-2026-52870,1.23.0,1.27.2,,HIGH,false,MCP Python SDK: Experimental task handlers allow any client to access and cancel other clients' tasks
+,PyPI,mcp,GHSA-j975-95f5-7wqh,CVE-2025-53365,,1.10.0,,HIGH,false,"MCP Python SDK has Unhandled Exception in Streamable HTTP Transport, Leading to Denial of Service"
+,PyPI,mcp,GHSA-jpw9-pfvf-9f58,CVE-2026-52869,,1.27.2,,HIGH,false,MCP Python SDK: HTTP transports serve session requests without verifying the authenticated principal
+,PyPI,mcp,GHSA-rwrf-2pqf-9j8j,CVE-2026-116686,2.0.0,2.2.0,,MODERATE,false,Model Context Protocol Python SDK: Client fetched server-chosen $ref URLs while validating tool results against output schemas
+,PyPI,mcp,GHSA-rwrf-2pqf-9j8j,CVE-2026-116686,1.10.0,1.30.0,,MODERATE,false,Model Context Protocol Python SDK: Client fetched server-chosen $ref URLs while validating tool results against output schemas
+,PyPI,mcp,GHSA-vj7q-gjh5-988w,CVE-2026-59950,,1.28.1,,HIGH,false,MCP Python SDK: WebSocket server transport does not support Host/Origin validation
+,PyPI,mcp,GHSA-w4fh-qvv9-3v23,CVE-2026-116684,2.0.0,2.2.0,,MODERATE,false,Model Context Protocol Python SDK: Server bearer-token authentication accepts tokens issued for a different resource server
+,PyPI,mcp,GHSA-w4fh-qvv9-3v23,CVE-2026-116684,1.10.0,1.30.0,,MODERATE,false,Model Context Protocol Python SDK: Server bearer-token authentication accepts tokens issued for a different resource server
+,PyPI,mcp,PYSEC-2026-1616,CVE-2025-53366,,1.9.4,,,false,"MCP Python SDK vulnerability in the FastMCP Server causes validation error, leading to DoS"
+,PyPI,mcp,PYSEC-2026-1617,CVE-2025-66416,,1.23.0,,,false,Model Context Protocol (MCP) Python SDK does not enable DNS rebinding protection by default
+,PyPI,mcp,PYSEC-2026-1618,CVE-2025-53365,,1.10.0,,,false,"MCP Python SDK has Unhandled Exception in Streamable HTTP Transport, Leading to Denial of Service"
+,PyPI,mcp,PYSEC-2026-3481,CVE-2026-52870,1.23.0,1.27.2,,,false,MCP Python SDK: Experimental task handlers allow any client to access and cancel other clients' tasks
+,PyPI,mcp,PYSEC-2026-3482,CVE-2026-52869,,1.27.2,,,false,MCP Python SDK: HTTP transports serve session requests without verifying the authenticated principal
+,PyPI,mcp,PYSEC-2026-3483,CVE-2026-59950,,1.28.1,,,false,MCP Python SDK: WebSocket server transport does not support Host/Origin validation
+,PyPI,mcp-server-git,GHSA-5cgr-j3jf-jw3v,CVE-2025-68143,,2025.9.25,,MODERATE,false,mcp-server-git's unrestricted git_init tool allows repository creation at arbitrary filesystem locations
+,PyPI,mcp-server-git,GHSA-9xwc-hfwc-8w59,CVE-2025-68144,,2025.12.18,,MODERATE,false, mcp-server-git argument injection in git_diff and git_checkout functions allows overwriting local files
+,PyPI,mcp-server-git,GHSA-j22h-9j4x-23w5,CVE-2025-68145,,2025.12.18,,MODERATE,false,mcp-server-git has missing path validation when using --repository flag
+,PyPI,mcp-server-git,GHSA-vjqx-cfc4-9h6v,CVE-2026-27735,,2026.1.14,,MODERATE,false,mcp-server-git : Path traversal in git_add allows staging files outside repository boundaries
+,PyPI,mcp-server-git,PYSEC-2026-1621,CVE-2025-68143,,2025.9.25,,,false,mcp-server-git's unrestricted git_init tool allows repository creation at arbitrary filesystem locations
+,PyPI,mcp-server-git,PYSEC-2026-1622,CVE-2025-68144,,2025.12.18,,,false, mcp-server-git argument injection in git_diff and git_checkout functions allows overwriting local files
+,PyPI,mcp-server-git,PYSEC-2026-1623,CVE-2025-68145,,2025.12.18,,,false,mcp-server-git has missing path validation when using --repository flag
+,PyPI,mcp-server-git,PYSEC-2026-2630,CVE-2026-27735,,2026.1.14,,,false,mcp-server-git : Path traversal in git_add allows staging files outside repository boundaries
